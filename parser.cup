@@ -1,0 +1,213 @@
+package com.jc;
+
+import java_cup.runtime.*;
+import java.io.IOException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.lang.Object;
+import java.util.*;
+import com.jc.node.*;
+
+parser code {:
+
+    protected Lexer lexer;
+    private FileInputStream fis;
+    private HashMap<String, String> symbolTable;
+    private HashMap<String, String> tempTable;
+    private Node tree;
+    private int tempSequence;
+
+    public Parser(String filename) {
+        symbolTable = new HashMap<>();
+        tempTable = new HashMap<>();
+        tempSequence = 1;
+
+        File file = new File(filename);
+        try {
+            fis = new FileInputStream(file);
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Node getTree() {
+        return tree;
+    }
+
+    public HashMap<String, String> getSymbolTable() {
+        return symbolTable;
+    }
+
+    public HashMap<String, String> getTempTable() {
+        return tempTable;
+    }
+
+    public void declare(String name, String type) throws Exception {
+        if (symbolTable.containsKey(name)) {
+            throw new Exception(String.format("Variable already declared: '%s'", name));
+        }
+        symbolTable.put(name, type);
+    }
+
+    public String newTemp(String type) {
+        String tempName = "t" + tempSequence++;
+        tempTable.put(tempName, type);
+        return tempName;
+    }
+
+    public void verifyVar(String name) throws Exception {
+        if (!symbolTable.containsKey(name)) {
+            throw new Exception(String.format("Variable not already declared: '%s'", name));
+        }
+    }
+
+    public String getVarType(String name) throws Exception {
+        verifyVar(name);
+        return symbolTable.get(name);
+    }
+
+    public Variable newVariableExpr(String name, String type) {
+        Variable variable = new Variable();
+        variable.name = name;
+        variable.type = type;
+        return variable;
+    }
+
+    public Literal newLiteralExpr(String type, Object value) {
+        Literal literal = new Literal();
+        literal.type = type;
+        literal.value = value;
+        return literal;
+    }
+
+    public Operation newOperationExpr(String op, Expression left, Expression right) throws Exception {
+        Operation operation = new Operation();
+        operation.type = widen(left.type, right.type);
+        operation.operation = op;
+        operation.temp = newTemp(operation.type);
+        return (Operation) pushBackChildren(operation, left, right);
+    }
+
+    public Assignment newAssignmentNode(String name, Expression exp) throws Exception {
+        verifyVar(name);
+        Assignment assignment = new Assignment();
+        assignment.variable = name;
+        return (Assignment) pushBackChildren(assignment, exp);
+    }
+
+    public Declaration newDeclarationNode(String name, String type) {
+        Declaration declaration = new Declaration();
+        declaration.type = type;
+        declaration.name = name;
+        return declaration;
+    }
+
+    public Print newPrintNode(Expression expression) {
+        Print print = new Print();
+        return (Print) pushBackChildren(print, expression);
+    }
+
+    public String widen(String type1, String type2) throws Exception {
+        if (type1.equals(Constants.T_REAL) || type2.equals(Constants.T_REAL)) return Constants.T_REAL;
+        if (type1.equals(Constants.T_INT) || type2.equals(Constants.T_INT)) return Constants.T_INT;
+        if (type1.equals(Constants.T_BOOL) || type2.equals(Constants.T_BOOL)) return Constants.T_BOOL;
+        return "";
+    }
+
+    public void verifyAritTypes(String type1, String type2) throws Exception {
+        if (!type1.equals(Constants.T_REAL) && !type1.equals(Constants.T_INT) || 
+            !type2.equals(Constants.T_REAL) && !type2.equals(Constants.T_INT)) {
+            throw new Exception(String.format("Invalid operation with types '%s' and '%s'", type1, type2)); 
+        }
+    }
+
+    public void verifyAssignTypes(String type1, String type2) throws Exception {
+        if (!type1.equals(type2)) {
+            throw new Exception(String.format(
+                "Cannot assign expression with type '%s' in variable with type '%s'", type2, type1));
+        }
+    }
+
+    public Node pushBackChildren(Node parent, Node... children) {
+        parent.children = List.of(children);
+        return parent;
+    }
+
+    public Node pushFrontChild(Node parent, Node child) {
+        if (parent.children == null) {
+            parent.children = new ArrayList<>();
+        }
+        parent.children.add(0, child);
+        return parent;
+    }
+
+:};
+
+init with {:
+    ComplexSymbolFactory factory = new ComplexSymbolFactory();
+    symbolFactory = factory;
+    lexer = new Lexer(factory, fis);
+:};
+
+scan with {:
+    return lexer.yylex();
+:};
+
+terminal String     ID;
+terminal String     TYPE;
+terminal Double     REAL;
+terminal Integer    INT;
+terminal Boolean    BOOL;
+terminal            ASSIGN;
+terminal            ADD;
+terminal            SUB;
+terminal            MULT;
+terminal            DIV;
+terminal            POW;
+terminal            SMC; // semicolon
+terminal            L_PTH; // open parenthesis
+terminal            R_PTH; // close parenthesis
+terminal            PRINT;
+
+non terminal Node           S;
+non terminal Node           _COMMANDS;
+non terminal Node           _COMMAND;
+non terminal Node           _DECL;
+non terminal Node           _ASSIGN;
+non terminal Expression     _EXP;
+non terminal Node           _PRINT;
+
+precedence left ADD, SUB;
+precedence left MULT, DIV;
+precedence left POW;
+
+S ::= _COMMANDS:cmds     {: System.out.println(cmds); tree = cmds; RESULT = cmds; :}
+    ;
+
+_COMMANDS ::= _COMMAND:cmd SMC _COMMANDS:cmds   {: RESULT = pushFrontChild(cmds, cmd); :}
+            |                   {: RESULT = new Node(); :}
+            ;
+
+_COMMAND ::= _DECL:node         {: RESULT = node; :}
+           | _ASSIGN:node       {: RESULT = node; :}
+           | _PRINT:node        {: RESULT = node; :}
+           ;
+
+_PRINT ::= PRINT L_PTH _EXP:e R_PTH {: RESULT = newPrintNode(e); :};
+
+_DECL ::= TYPE:t ID:id          {: declare(id, t); RESULT = newDeclarationNode(id, t); :};
+
+_ASSIGN ::= ID:id ASSIGN _EXP:e {: verifyAssignTypes(getVarType(id), e.type); RESULT = newAssignmentNode(id, e); :};
+
+_EXP ::= ID:id                  {: RESULT = newVariableExpr(id, getVarType(id)); :}
+       | REAL:val               {: RESULT = newLiteralExpr(Constants.T_REAL, val); :}
+       | INT:val                {: RESULT = newLiteralExpr(Constants.T_INT, val); :}
+       | BOOL:val               {: RESULT = newLiteralExpr(Constants.T_BOOL, val); :}
+       | _EXP:e1 ADD _EXP:e2    {: verifyAritTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_ADD, e1, e2); :}
+       | _EXP:e1 SUB _EXP:e2    {: verifyAritTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_SUB, e1, e2); :}
+       | _EXP:e1 MULT _EXP:e2   {: verifyAritTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_MULT, e1, e2); :}
+       | _EXP:e1 DIV _EXP:e2    {: verifyAritTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_DIV, e1, e2); :}
+       | _EXP:e1 POW _EXP:e2    {: verifyAritTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_POW, e1, e2); :}
+       | L_PTH _EXP:e R_PTH     {: RESULT = e; :}
+       ;

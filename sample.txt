@@ -1,0 +1,7 @@
+
+func imprime_algo() {
+    int a = 5;
+    bool b = true;
+    real c = a + 8.9 ** 2;
+    print("O valor final é: ${c}");
+}
