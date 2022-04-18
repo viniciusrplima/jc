@@ -66,6 +66,10 @@ public class Runner {
 
             if (command.op == Op.OP_STORE) store(command);
             else if (command.op == Op.OP_ADD) add(command);
+            else if (command.op == Op.OP_SUB) sub(command);
+            else if (command.op == Op.OP_MULT) mult(command);
+            else if (command.op == Op.OP_DIV) div(command);
+            else if (command.op == Op.OP_POW) pow(command);
             else if (command.op == Op.OP_PRINT) print(command);
 
             currentCommand++;
@@ -93,6 +97,65 @@ public class Runner {
             Integer left = getIntegerValueFromExpression(command.left);
             Integer right = getIntegerValueFromExpression(command.right);
             result.value = left + right;
+        }
+    }
+
+    private void sub(Command command) {
+        Var result = temps.get(command.result);
+
+        if (result.type == Double.class) {
+            Double left = getDoubleValueFromExpression(command.left);
+            Double right = getDoubleValueFromExpression(command.right);
+            result.value = left - right;
+        }
+        else if (result.type == Integer.class) {
+            Integer left = getIntegerValueFromExpression(command.left);
+            Integer right = getIntegerValueFromExpression(command.right);
+            result.value = left - right;
+        }
+    }
+
+    private void mult(Command command) {
+        Var result = temps.get(command.result);
+
+        if (result.type == Double.class) {
+            Double left = getDoubleValueFromExpression(command.left);
+            Double right = getDoubleValueFromExpression(command.right);
+            result.value = left * right;
+        }
+        else if (result.type == Integer.class) {
+            Integer left = getIntegerValueFromExpression(command.left);
+            Integer right = getIntegerValueFromExpression(command.right);
+            result.value = left * right;
+        }
+    }
+
+    private void div(Command command) {
+        Var result = temps.get(command.result);
+
+        if (result.type == Double.class) {
+            Double left = getDoubleValueFromExpression(command.left);
+            Double right = getDoubleValueFromExpression(command.right);
+            result.value = left / right;
+        }
+        else if (result.type == Integer.class) {
+            Integer left = getIntegerValueFromExpression(command.left);
+            Integer right = getIntegerValueFromExpression(command.right);
+            result.value = left / right;
+        }
+    }
+
+    private void pow(Command command) {
+        Var result = temps.get(command.result);
+
+        Double left = getDoubleValueFromExpression(command.left);
+        Double right = getDoubleValueFromExpression(command.right);
+
+        if (result.type == Double.class) {
+            result.value = Double.valueOf(Math.pow(left, right));
+        }
+        else if (result.type == Integer.class) {
+            result.value = Integer.valueOf((int) Math.floor(Math.pow(left, right)));
         }
     }
 
