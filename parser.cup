@@ -43,45 +43,45 @@ parser code {:
         return tempTable;
     }
 
-    public void declare(String name, String type) throws Exception {
+    private void declare(String name, String type) throws Exception {
         if (symbolTable.containsKey(name)) {
             throw new Exception(String.format("Variable already declared: '%s'", name));
         }
         symbolTable.put(name, type);
     }
 
-    public String newTemp(String type) {
+    private String newTemp(String type) {
         String tempName = "t" + tempSequence++;
         tempTable.put(tempName, type);
         return tempName;
     }
 
-    public void verifyVar(String name) throws Exception {
+    private void verifyVar(String name) throws Exception {
         if (!symbolTable.containsKey(name)) {
             throw new Exception(String.format("Variable not already declared: '%s'", name));
         }
     }
 
-    public String getVarType(String name) throws Exception {
+    private String getVarType(String name) throws Exception {
         verifyVar(name);
         return symbolTable.get(name);
     }
 
-    public Variable newVariableExpr(String name, String type) {
+    private Variable newVariableExpr(String name, String type) {
         Variable variable = new Variable();
         variable.name = name;
         variable.type = type;
         return variable;
     }
 
-    public Literal newLiteralExpr(String type, Object value) {
+    private Literal newLiteralExpr(String type, Object value) {
         Literal literal = new Literal();
         literal.type = type;
         literal.value = value;
         return literal;
     }
 
-    public Operation newOperationExpr(String op, Expression left, Expression right) throws Exception {
+    private Operation newOperationExpr(String op, Expression left, Expression right) throws Exception {
         Operation operation = new Operation();
         operation.type = widen(left.type, right.type);
         operation.operation = op;
@@ -89,52 +89,52 @@ parser code {:
         return (Operation) pushBackChildren(operation, left, right);
     }
 
-    public Assignment newAssignmentNode(String name, Expression exp) throws Exception {
+    private Assignment newAssignmentNode(String name, Expression exp) throws Exception {
         verifyVar(name);
         Assignment assignment = new Assignment();
         assignment.variable = name;
         return (Assignment) pushBackChildren(assignment, exp);
     }
 
-    public Declaration newDeclarationNode(String name, String type) {
+    private Declaration newDeclarationNode(String name, String type) {
         Declaration declaration = new Declaration();
         declaration.type = type;
         declaration.name = name;
         return declaration;
     }
 
-    public Print newPrintNode(Expression expression) {
+    private Print newPrintNode(Expression expression) {
         Print print = new Print();
         return (Print) pushBackChildren(print, expression);
     }
 
-    public String widen(String type1, String type2) throws Exception {
+    private String widen(String type1, String type2) throws Exception {
         if (type1.equals(Constants.T_REAL) || type2.equals(Constants.T_REAL)) return Constants.T_REAL;
         if (type1.equals(Constants.T_INT) || type2.equals(Constants.T_INT)) return Constants.T_INT;
         if (type1.equals(Constants.T_BOOL) || type2.equals(Constants.T_BOOL)) return Constants.T_BOOL;
         return "";
     }
 
-    public void verifyAritTypes(String type1, String type2) throws Exception {
+    private void verifyAritTypes(String type1, String type2) throws Exception {
         if (!type1.equals(Constants.T_REAL) && !type1.equals(Constants.T_INT) || 
             !type2.equals(Constants.T_REAL) && !type2.equals(Constants.T_INT)) {
             throw new Exception(String.format("Invalid operation with types '%s' and '%s'", type1, type2)); 
         }
     }
 
-    public void verifyAssignTypes(String type1, String type2) throws Exception {
+    private void verifyAssignTypes(String type1, String type2) throws Exception {
         if (!type1.equals(type2)) {
             throw new Exception(String.format(
                 "Cannot assign expression with type '%s' in variable with type '%s'", type2, type1));
         }
     }
 
-    public Node pushBackChildren(Node parent, Node... children) {
+    private Node pushBackChildren(Node parent, Node... children) {
         parent.children = List.of(children);
         return parent;
     }
 
-    public Node pushFrontChild(Node parent, Node child) {
+    private Node pushFrontChild(Node parent, Node child) {
         if (parent.children == null) {
             parent.children = new ArrayList<>();
         }
@@ -142,6 +142,9 @@ parser code {:
         return parent;
     }
 
+    private String trimString(String string) {
+        return string.substring(1, string.length()-1);
+    }
 :};
 
 init with {:
@@ -158,6 +161,7 @@ terminal String     ID;
 terminal String     TYPE;
 terminal Double     REAL;
 terminal Integer    INT;
+terminal String     STRING;
 terminal Boolean    BOOL;
 terminal            ASSIGN;
 terminal            ADD;
@@ -204,6 +208,7 @@ _EXP ::= ID:id                  {: RESULT = newVariableExpr(id, getVarType(id));
        | REAL:val               {: RESULT = newLiteralExpr(Constants.T_REAL, val); :}
        | INT:val                {: RESULT = newLiteralExpr(Constants.T_INT, val); :}
        | BOOL:val               {: RESULT = newLiteralExpr(Constants.T_BOOL, val); :}
+       | STRING:val             {: RESULT = newLiteralExpr(Constants.T_STR, trimString(val)); :}
        | _EXP:e1 ADD _EXP:e2    {: verifyAritTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_ADD, e1, e2); :}
        | _EXP:e1 SUB _EXP:e2    {: verifyAritTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_SUB, e1, e2); :}
        | _EXP:e1 MULT _EXP:e2   {: verifyAritTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_MULT, e1, e2); :}

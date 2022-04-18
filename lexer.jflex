@@ -38,7 +38,8 @@ real        = {digit}+\.{digit}+
 bool        = (true|false)
 id          = [a-zA-Z_]([a-zA-Z0-9_])*
 space       = [ \t\n]
-type        = (int|real|bool)
+type        = (int|real|bool|str)
+string      = \".*\"
 
 %eofval{
     return symbol("EOF", sym.EOF);
@@ -60,6 +61,7 @@ type        = (int|real|bool)
 ")"             { return symbol("RIGHT_PARENTHESIS", sym.R_PTH); }
 {type}          { return symbol("TYPE", sym.TYPE, yytext()); }
 "print"         { return symbol("PRINT", sym.PRINT); }
+{string}        { return symbol("STRING", sym.STRING, yytext()); }
 {id}            { return symbol("ID", sym.ID, yytext()); }
 {space}         { }
 .               { System.out.printf("error: unexpected char |%s|\n", yytext()); }
