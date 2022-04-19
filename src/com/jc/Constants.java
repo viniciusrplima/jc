@@ -11,4 +11,7 @@ public class Constants {
     public static final String OP_MULT = "*";
     public static final String OP_DIV = "/";
     public static final String OP_POW = "**";
+    public static final String OP_OR = "or";
+    public static final String OP_AND = "and";
+    public static final String OP_NOT = "not";
 }

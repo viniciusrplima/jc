@@ -70,6 +70,9 @@ public class Runner {
             else if (command.op == Op.OP_MULT) mult(command);
             else if (command.op == Op.OP_DIV) div(command);
             else if (command.op == Op.OP_POW) pow(command);
+            else if (command.op == Op.OP_OR) or(command);
+            else if (command.op == Op.OP_AND) and(command);
+            else if (command.op == Op.OP_NOT) not(command);
             else if (command.op == Op.OP_PRINT) print(command);
 
             currentCommand++;
@@ -79,6 +82,7 @@ public class Runner {
     private void print(Command command) {
         System.out.println(getValueFromExpression(command.left));
     }
+
 
     private void store(Command command) {
         Var variable = vars.get(command.result);
@@ -157,6 +161,29 @@ public class Runner {
         else if (result.type == Integer.class) {
             result.value = Integer.valueOf((int) Math.floor(Math.pow(left, right)));
         }
+    }
+
+    private void and(Command command) {
+        Boolean left = (Boolean) getValueFromExpression(command.left);
+        Boolean right = (Boolean) getValueFromExpression(command.right);
+        
+        Var result = temps.get(command.result);
+        result.value = left && right;
+    }
+
+    private void or(Command command) {
+        Boolean left = (Boolean) getValueFromExpression(command.left);
+        Boolean right = (Boolean) getValueFromExpression(command.right);
+        
+        Var result = temps.get(command.result);
+        result.value = left || right;
+    }
+
+    private void not(Command command) {
+        Boolean exp = (Boolean) getValueFromExpression(command.left);
+        
+        Var result = temps.get(command.result);
+        result.value = !exp;
     }
 
     private Double getDoubleValueFromExpression(Expression expression) {

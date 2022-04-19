@@ -89,6 +89,14 @@ parser code {:
         return (Operation) pushBackChildren(operation, left, right);
     }
 
+    private Operation newUnaryOperationExpr(String op, Expression exp) throws Exception {
+        Operation operation = new Operation();
+        operation.type = exp.type;
+        operation.operation = op;
+        operation.temp = newTemp(operation.type);
+        return (Operation) pushBackChildren(operation, exp);
+    }
+
     private Assignment newAssignmentNode(String name, Expression exp) throws Exception {
         verifyVar(name);
         Assignment assignment = new Assignment();
@@ -119,6 +127,18 @@ parser code {:
         if (!type1.equals(Constants.T_REAL) && !type1.equals(Constants.T_INT) || 
             !type2.equals(Constants.T_REAL) && !type2.equals(Constants.T_INT)) {
             throw new Exception(String.format("Invalid operation with types '%s' and '%s'", type1, type2)); 
+        }
+    }
+
+    public void verifyLogicTypes(String type1, String type2) throws Exception {
+        if (!type1.equals(Constants.T_BOOL) || !type2.equals(Constants.T_BOOL)) {
+            throw new Exception(String.format("Invalid operation with types '%s' and '%s'", type1, type2)); 
+        }
+    }
+
+    public void verifyUnaryLogicTypes(String type) throws Exception {
+        if (!type.equals(Constants.T_BOOL)) {
+            throw new Exception(String.format("Invalid unary operation with type '%s'", type));
         }
     }
 
@@ -169,6 +189,9 @@ terminal            SUB;
 terminal            MULT;
 terminal            DIV;
 terminal            POW;
+terminal            OR;
+terminal            AND;
+terminal            NOT;
 terminal            SMC; // semicolon
 terminal            L_PTH; // open parenthesis
 terminal            R_PTH; // close parenthesis
@@ -185,6 +208,10 @@ non terminal Node           _PRINT;
 precedence left ADD, SUB;
 precedence left MULT, DIV;
 precedence left POW;
+
+precedence left OR;
+precedence left AND;
+precedence left NOT;
 
 S ::= _COMMANDS:cmds     {: System.out.println(cmds); tree = cmds; RESULT = cmds; :}
     ;
@@ -214,5 +241,8 @@ _EXP ::= ID:id                  {: RESULT = newVariableExpr(id, getVarType(id));
        | _EXP:e1 MULT _EXP:e2   {: verifyAritTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_MULT, e1, e2); :}
        | _EXP:e1 DIV _EXP:e2    {: verifyAritTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_DIV, e1, e2); :}
        | _EXP:e1 POW _EXP:e2    {: verifyAritTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_POW, e1, e2); :}
+       | _EXP:e1 OR _EXP:e2     {: verifyLogicTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_OR, e1, e2); :}
+       | _EXP:e1 AND _EXP:e2    {: verifyLogicTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_AND, e1, e2); :}
+       | NOT _EXP:e             {: verifyUnaryLogicTypes(e.type); RESULT = newUnaryOperationExpr(Constants.OP_NOT, e); :}
        | L_PTH _EXP:e R_PTH     {: RESULT = e; :}
        ;

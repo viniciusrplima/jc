@@ -8,5 +8,8 @@ public enum Op {
     OP_MULT, 
     OP_DIV, 
     OP_POW, 
-    OP_PRINT
+    OP_PRINT, 
+    OP_OR, 
+    OP_AND, 
+    OP_NOT;
 }

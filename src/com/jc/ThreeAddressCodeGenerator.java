@@ -74,6 +74,9 @@ public class ThreeAddressCodeGenerator {
         if (operation.operation.equals(OP_MULT)) op = Op.OP_MULT;
         if (operation.operation.equals(OP_DIV)) op = Op.OP_DIV;
         if (operation.operation.equals(OP_POW)) op = Op.OP_POW;
+        if (operation.operation.equals(OP_OR)) op = Op.OP_OR;
+        if (operation.operation.equals(OP_AND)) op = Op.OP_AND;
+        if (operation.operation.equals(OP_NOT)) op = Op.OP_NOT;
 
         Expression left = (Expression) operation.children.get(0);
         Expression right = null;

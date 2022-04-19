@@ -56,6 +56,9 @@ string      = \".*\"
 "-"             { return symbol("SUB", sym.SUB); }
 "*"             { return symbol("MULT", sym.MULT); }
 "/"             { return symbol("DIV", sym.DIV); }
+"or"            { return symbol("OR", sym.OR); }
+"and"           { return symbol("AND", sym.AND); }
+"not"           { return symbol("NOT", sym.NOT); }
 ";"             { return symbol("SEMICOLON", sym.SMC); }
 "("             { return symbol("LEFT_PARENTHESIS", sym.L_PTH); }
 ")"             { return symbol("RIGHT_PARENTHESIS", sym.R_PTH); }
