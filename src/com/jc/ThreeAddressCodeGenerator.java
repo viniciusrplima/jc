@@ -49,8 +49,39 @@ public class ThreeAddressCodeGenerator {
         if (tree instanceof Declaration) return new ArrayList<>();
         else if (tree instanceof Assignment) return generateCommands((Assignment) tree);
         else if (tree instanceof Operation) return generateCommands((Operation) tree, parent);
+        else if (tree instanceof Conditional) return generateCommands((Conditional) tree, parent);
         else if (tree instanceof Print) return generateCommands((Print) tree);
+        else if (tree instanceof Expression) return new ArrayList<>();
+        else if (tree instanceof Node) return generateCommands(tree);
         return new ArrayList<>();
+    }
+
+    private List<Command> generateCommands(Node tree) {
+        List<Command> code = new ArrayList<>();
+        Block child = new Block();
+        child.next = newLabel();
+
+        for (Node node : tree.children) {
+            code.addAll(generateForSubtree(node, child));
+        }
+
+        code.add(newLabelCommand(child.next));
+
+        return code;
+    }
+
+    private List<Command> generateCommands(Conditional conditional, Block parent) {
+        Block child = new Block();
+        child.next = parent.next;
+        child.ifFalse = newLabel();
+        
+        List<Command> code = new ArrayList<>();
+        code.add(new Command(Op.OP_IFFALSE_JUMP, conditional.test, null, child.ifFalse));
+        code.addAll(generateForSubtree(conditional.children.get(0), child));
+        code.add(new Command(Op.OP_JUMP, null, null, parent.next));
+        code.add(newLabelCommand(child.ifFalse));
+
+        return code;
     }
 
     private List<Command> generateCommands(Print print) {

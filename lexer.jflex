@@ -62,8 +62,12 @@ string      = \".*\"
 ";"             { return symbol("SEMICOLON", sym.SMC); }
 "("             { return symbol("LEFT_PARENTHESIS", sym.L_PTH); }
 ")"             { return symbol("RIGHT_PARENTHESIS", sym.R_PTH); }
+"{"             { return symbol("LEFT_CURLY_BRACKETS", sym.L_CRL); }
+"}"             { return symbol("RIGHT_CURLY_BRACKETS", sym.R_CRL); }
 {type}          { return symbol("TYPE", sym.TYPE, yytext()); }
 "print"         { return symbol("PRINT", sym.PRINT); }
+"if"            { return symbol("IF", sym.IF); }
+"else"          { return symbol("ELSE", sym.ELSE); }
 {string}        { return symbol("STRING", sym.STRING, yytext()); }
 {id}            { return symbol("ID", sym.ID, yytext()); }
 {space}         { }

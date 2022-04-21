@@ -116,6 +116,12 @@ parser code {:
         return (Print) pushBackChildren(print, expression);
     }
 
+    private Conditional newConditionalNode(Expression expression, Node block) {
+        Conditional conditional = new Conditional();
+        conditional.test = expression;
+        return (Conditional) pushBackChildren(conditional, block);
+    }
+
     private String widen(String type1, String type2) throws Exception {
         if (type1.equals(Constants.T_REAL) || type2.equals(Constants.T_REAL)) return Constants.T_REAL;
         if (type1.equals(Constants.T_INT) || type2.equals(Constants.T_INT)) return Constants.T_INT;
@@ -146,6 +152,12 @@ parser code {:
         if (!type1.equals(type2)) {
             throw new Exception(String.format(
                 "Cannot assign expression with type '%s' in variable with type '%s'", type2, type1));
+        }
+    }
+
+    private void verifyBooleanType(String type) throws Exception {
+        if (!type.equals(Constants.T_BOOL)) {
+            throw new Exception(String.format("Invalid type '%s', must be 'bool'", type));
         }
     }
 
@@ -195,7 +207,11 @@ terminal            NOT;
 terminal            SMC; // semicolon
 terminal            L_PTH; // open parenthesis
 terminal            R_PTH; // close parenthesis
+terminal            L_CRL; // left curly brackets
+terminal            R_CRL; // right curly brackets 
 terminal            PRINT;
+terminal            IF;
+terminal            ELSE;
 
 non terminal Node           S;
 non terminal Node           _COMMANDS;
@@ -204,6 +220,7 @@ non terminal Node           _DECL;
 non terminal Node           _ASSIGN;
 non terminal Expression     _EXP;
 non terminal Node           _PRINT;
+non terminal Node           _CONDITIONAL;
 
 precedence left ADD, SUB;
 precedence left MULT, DIV;
@@ -217,6 +234,7 @@ S ::= _COMMANDS:cmds     {: System.out.println(cmds); tree = cmds; RESULT = cmds
     ;
 
 _COMMANDS ::= _COMMAND:cmd SMC _COMMANDS:cmds   {: RESULT = pushFrontChild(cmds, cmd); :}
+            | _CONDITIONAL:cond _COMMANDS:cmds  {: RESULT = pushFrontChild(cmds, cond); :}
             |                   {: RESULT = new Node(); :}
             ;
 
@@ -246,3 +264,6 @@ _EXP ::= ID:id                  {: RESULT = newVariableExpr(id, getVarType(id));
        | NOT _EXP:e             {: verifyUnaryLogicTypes(e.type); RESULT = newUnaryOperationExpr(Constants.OP_NOT, e); :}
        | L_PTH _EXP:e R_PTH     {: RESULT = e; :}
        ;
+
+_CONDITIONAL ::= IF L_PTH _EXP:e R_PTH L_CRL _COMMANDS:cmds R_CRL {: verifyBooleanType(e.type); RESULT = newConditionalNode(e, cmds); :}
+               ;
