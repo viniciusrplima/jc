@@ -13,6 +13,12 @@ public enum Op {
     OP_OR, 
     OP_AND, 
     OP_NOT, 
+    OP_EQ, 
+    OP_NEQ, 
+    OP_GT, 
+    OP_GTE, 
+    OP_LT, 
+    OP_LTE, 
     OP_JUMP, 
     OP_IFTRUE_JUMP, 
     OP_IFFALSE_JUMP;

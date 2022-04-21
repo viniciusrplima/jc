@@ -14,4 +14,10 @@ public class Constants {
     public static final String OP_OR = "or";
     public static final String OP_AND = "and";
     public static final String OP_NOT = "not";
+    public static final String OP_EQ = "==";
+    public static final String OP_NEQ = "!=";
+    public static final String OP_GT = ">";
+    public static final String OP_GTE = ">=";
+    public static final String OP_LT = "<";
+    public static final String OP_LTE = "<=";
 }

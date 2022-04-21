@@ -50,6 +50,12 @@ string      = \".*\"
 {real}          { return symbol("REAL", sym.REAL, Double.valueOf(yytext())); }
 {number}        { return symbol("INT", sym.INT, Integer.valueOf(yytext())); }
 {bool}          { return symbol("BOOL", sym.BOOL, Boolean.valueOf(yytext())); }
+"=="            { return symbol("EQUAL", sym.EQ); }
+"!="            { return symbol("NOT_EQUAL", sym.NEQ); }
+">="            { return symbol("GREATER_THAN_OR_EQUAL", sym.GTE); }
+">"             { return symbol("GREATER_THAN", sym.GT); }
+"<"             { return symbol("LESS_THAN", sym.LT); }
+"<="            { return symbol("LESS_THAN_OR_EQUAL", sym.LTE); }
 "="             { return symbol("ASSIGN", sym.ASSIGN); }
 "**"            { return symbol("POWER", sym.POW); }
 "+"             { return symbol("ADD", sym.ADD); }

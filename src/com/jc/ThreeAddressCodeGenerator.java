@@ -76,8 +76,13 @@ public class ThreeAddressCodeGenerator {
         Block child = new Block();
         child.next = parent.next;
         child.ifFalse = newLabel();
+
+        Block childExpr = new Block();
+        childExpr.next = newLabel();
         
         List<Command> code = new ArrayList<>();
+        code.addAll(generateForSubtree(conditional.test, childExpr));
+        code.add(newLabelCommand(childExpr.next));
         code.add(new Command(Op.OP_IFFALSE_JUMP, conditional.test, null, child.ifFalse));
         code.addAll(generateForSubtree(conditional.children.get(0), child));
         code.add(new Command(Op.OP_JUMP, null, null, parent.next));
@@ -124,6 +129,12 @@ public class ThreeAddressCodeGenerator {
         if (operation.operation.equals(OP_OR)) op = Op.OP_OR;
         if (operation.operation.equals(OP_AND)) op = Op.OP_AND;
         if (operation.operation.equals(OP_NOT)) op = Op.OP_NOT;
+        if (operation.operation.equals(OP_EQ)) op = Op.OP_EQ;
+        if (operation.operation.equals(OP_NEQ)) op = Op.OP_NEQ;
+        if (operation.operation.equals(OP_GT)) op = Op.OP_GT;
+        if (operation.operation.equals(OP_GTE)) op = Op.OP_GTE;
+        if (operation.operation.equals(OP_LT)) op = Op.OP_LT;
+        if (operation.operation.equals(OP_LTE)) op = Op.OP_LTE;
 
         Expression left = (Expression) operation.children.get(0);
         Expression right = null;

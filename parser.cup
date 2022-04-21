@@ -89,6 +89,14 @@ parser code {:
         return (Operation) pushBackChildren(operation, left, right);
     }
 
+    private Operation newRelOperationExpr(String op, Expression left, Expression right) throws Exception {
+        Operation operation = new Operation();
+        operation.type = Constants.T_BOOL;
+        operation.operation = op;
+        operation.temp = newTemp(operation.type);
+        return (Operation) pushBackChildren(operation, left, right);
+    }
+
     private Operation newUnaryOperationExpr(String op, Expression exp) throws Exception {
         Operation operation = new Operation();
         operation.type = exp.type;
@@ -165,6 +173,13 @@ parser code {:
         }
     }
 
+    private void verifyRelationalTypes(String type1, String type2) throws Exception {
+        if (!type1.equals(type2)) {
+            throw new Exception(String.format(
+                "Cannot compare expressions with types '%s' and '%s'", type2, type1));
+        }
+    }
+
     private Node pushBackChildren(Node parent, Node... children) {
         if (parent.children == null) {
             parent.children = new ArrayList<>();
@@ -211,6 +226,12 @@ terminal            POW;
 terminal            OR;
 terminal            AND;
 terminal            NOT;
+terminal            EQ;
+terminal            NEQ;
+terminal            GT;
+terminal            GTE;
+terminal            LT;
+terminal            LTE;
 terminal            SMC; // semicolon
 terminal            L_PTH; // open parenthesis
 terminal            R_PTH; // close parenthesis
@@ -229,6 +250,8 @@ non terminal Expression     _EXP;
 non terminal Node           _PRINT;
 non terminal Node           _CONDITIONAL;
 non terminal Node           _CONDITIONAL_ALT;
+
+precedence left EQ, NEQ, GT, GTE, LT, LTE;
 
 precedence left ADD, SUB;
 precedence left MULT, DIV;
@@ -270,6 +293,12 @@ _EXP ::= ID:id                  {: RESULT = newVariableExpr(id, getVarType(id));
        | _EXP:e1 OR _EXP:e2     {: verifyLogicTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_OR, e1, e2); :}
        | _EXP:e1 AND _EXP:e2    {: verifyLogicTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_AND, e1, e2); :}
        | NOT _EXP:e             {: verifyUnaryLogicTypes(e.type); RESULT = newUnaryOperationExpr(Constants.OP_NOT, e); :}
+       | _EXP:e1 EQ _EXP:e2     {: verifyRelationalTypes(e1.type, e2.type); RESULT = newRelOperationExpr(Constants.OP_EQ, e1, e2); :}
+       | _EXP:e1 NEQ _EXP:e2    {: verifyRelationalTypes(e1.type, e2.type); RESULT = newRelOperationExpr(Constants.OP_NEQ, e1, e2); :}
+       | _EXP:e1 GT _EXP:e2     {: verifyRelationalTypes(e1.type, e2.type); RESULT = newRelOperationExpr(Constants.OP_GT, e1, e2); :}
+       | _EXP:e1 GTE _EXP:e2    {: verifyRelationalTypes(e1.type, e2.type); RESULT = newRelOperationExpr(Constants.OP_GTE, e1, e2); :}
+       | _EXP:e1 LT _EXP:e2     {: verifyRelationalTypes(e1.type, e2.type); RESULT = newRelOperationExpr(Constants.OP_LT, e1, e2); :}
+       | _EXP:e1 LTE _EXP:e2    {: verifyRelationalTypes(e1.type, e2.type); RESULT = newRelOperationExpr(Constants.OP_LTE, e1, e2); :}
        | L_PTH _EXP:e R_PTH     {: RESULT = e; :}
        ;
 

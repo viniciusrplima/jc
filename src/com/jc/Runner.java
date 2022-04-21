@@ -74,6 +74,12 @@ public class Runner {
             else if (command.op == Op.OP_OR) or(command);
             else if (command.op == Op.OP_AND) and(command);
             else if (command.op == Op.OP_NOT) not(command);
+            else if (command.op == Op.OP_EQ) eq(command);
+            else if (command.op == Op.OP_NEQ) neq(command);
+            else if (command.op == Op.OP_GT) gt(command);
+            else if (command.op == Op.OP_GTE) gte(command);
+            else if (command.op == Op.OP_LT) lt(command);
+            else if (command.op == Op.OP_LTE) lte(command);
             else if (command.op == Op.OP_JUMP) jump(command);
             else if (command.op == Op.OP_IFTRUE_JUMP) ifTrueJump(command);
             else if (command.op == Op.OP_IFFALSE_JUMP) ifFalseJump(command);
@@ -108,7 +114,6 @@ public class Runner {
     private void ifFalseJump(Command command) {
         Boolean value = (Boolean) getValueFromExpression(command.left);
         if (!value) {
-            String label = command.result;
             Integer labelIndex = labels.get(command.result);
             currentCommand = labelIndex.intValue();
         }
@@ -218,6 +223,54 @@ public class Runner {
         
         Var result = temps.get(command.result);
         result.value = !exp;
+    }
+
+    private void eq(Command command) {
+        Comparable left = (Comparable) getValueFromExpression(command.left);
+        Comparable right = (Comparable) getValueFromExpression(command.right);
+
+        Var result = temps.get(command.result);
+        result.value = left.equals(right);
+    }
+
+    private void neq(Command command) {
+        Comparable left = (Comparable) getValueFromExpression(command.left);
+        Comparable right = (Comparable) getValueFromExpression(command.right);
+
+        Var result = temps.get(command.result);
+        result.value = !left.equals(right);
+    }
+
+    private void gt(Command command) {
+        Comparable left = (Comparable) getValueFromExpression(command.left);
+        Comparable right = (Comparable) getValueFromExpression(command.right);
+
+        Var result = temps.get(command.result);
+        result.value = left.compareTo(right) > 0;
+    }
+
+    private void gte(Command command) {
+        Comparable left = (Comparable) getValueFromExpression(command.left);
+        Comparable right = (Comparable) getValueFromExpression(command.right);
+
+        Var result = temps.get(command.result);
+        result.value = left.compareTo(right) >= 0;
+    }
+
+    private void lt(Command command) {
+        Comparable left = (Comparable) getValueFromExpression(command.left);
+        Comparable right = (Comparable) getValueFromExpression(command.right);
+
+        Var result = temps.get(command.result);
+        result.value = left.compareTo(right) < 0;
+    }
+
+    private void lte(Command command) {
+        Comparable left = (Comparable) getValueFromExpression(command.left);
+        Comparable right = (Comparable) getValueFromExpression(command.right);
+
+        Var result = temps.get(command.result);
+        result.value = left.compareTo(right) <= 0;
     }
 
     private Double getDoubleValueFromExpression(Expression expression) {
