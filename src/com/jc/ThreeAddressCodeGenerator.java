@@ -41,33 +41,43 @@ public class ThreeAddressCodeGenerator {
         return "L" + labelSequence++;
     }
 
+    private Command newLabelCommand(String label) {
+        return new Command(label, null, null, null, null);
+    }
+
     private List<Command> generateForSubtree(Node tree, Block parent) {
         if (tree instanceof Declaration) return new ArrayList<>();
         else if (tree instanceof Assignment) return generateCommands((Assignment) tree);
-        else if (tree instanceof Operation) return generateCommands((Operation) tree);
+        else if (tree instanceof Operation) return generateCommands((Operation) tree, parent);
         else if (tree instanceof Print) return generateCommands((Print) tree);
         return new ArrayList<>();
     }
 
     private List<Command> generateCommands(Print print) {
+        Block child = new Block();
+        child.next = newLabel();
         Expression expression = (Expression) print.children.get(0);
 
         List<Command> code = new ArrayList<>();
-        code.addAll(generateForSubtree(expression, null));
+        code.addAll(generateForSubtree(expression, child));
+        code.add(new Command(child.next, null, null, null, null));
         code.add(new Command(Op.OP_PRINT, expression, null, null));
         return code;
     }
 
     private List<Command> generateCommands(Assignment assignment) {
+        Block child = new Block();
+        child.next = newLabel();
         Expression expression = (Expression) assignment.children.get(0);
 
         List<Command> code = new ArrayList<>();
-        code.addAll(generateForSubtree(expression, null));
+        code.addAll(generateForSubtree(expression, child));
+        code.add(new Command(child.next, null, null, null, null));
         code.add(new Command(Op.OP_STORE, expression, null, assignment.variable));
         return code;
     }
 
-    private List<Command> generateCommands(Operation operation) {
+    private List<Command> generateCommands(Operation operation, Block parent) {
         Op op = null;
         if (operation.operation.equals(OP_ADD)) op = Op.OP_ADD;
         if (operation.operation.equals(OP_SUB)) op = Op.OP_SUB;
@@ -84,10 +94,81 @@ public class ThreeAddressCodeGenerator {
             right = (Expression) operation.children.get(1);
         }
 
+        if (op == Op.OP_OR) return generateOrOperationCommands(operation, op, left, right, parent);
+        else if (op == Op.OP_AND) return generateAndOperationCommands(operation, op, left, right, parent);
+        else return generateStandardOperationCommands(operation, op, left, right, parent);
+
+    }
+
+    public List<Command> generateAndOperationCommands(
+        Operation operation, Op op, Expression left, Expression right, Block parent) {
+        
+        Block leftBlock = new Block();
+        Block rightBlock = new Block();
+        rightBlock.next = newLabel();
+        rightBlock.ifTrue = rightBlock.next;
+        rightBlock.ifFalse = rightBlock.next;
+        leftBlock.next = newLabel();
+        leftBlock.ifFalse = rightBlock.next;
+        leftBlock.ifTrue = leftBlock.next;
+
         List<Command> code = new ArrayList<>();
-        code.addAll(generateForSubtree(left, null));
-        code.addAll(generateForSubtree(right, null));
+        code.addAll(generateForSubtree(left, leftBlock));
+        code.add(new Command(Op.OP_IFTRUE_JUMP, left, null, leftBlock.ifTrue));
+        code.add(new Command(Op.OP_MOV, left, null, operation.temp));
+        code.add(new Command(Op.OP_JUMP, null, null, parent.next));
+        code.add(newLabelCommand(leftBlock.next));
+        code.addAll(generateForSubtree(right, rightBlock));
+        code.add(newLabelCommand(rightBlock.next));
         code.add(new Command(op, left, right, operation.temp));
+
+        return code;
+    }
+
+    public List<Command> generateOrOperationCommands(
+        Operation operation, Op op, Expression left, Expression right, Block parent) {
+        
+        Block leftBlock = new Block();
+        Block rightBlock = new Block();
+        rightBlock.next = newLabel();
+        rightBlock.ifTrue = rightBlock.next;
+        rightBlock.ifFalse = rightBlock.next;
+        leftBlock.next = newLabel();
+        leftBlock.ifFalse = leftBlock.next;
+        leftBlock.ifTrue = rightBlock.next;
+
+        List<Command> code = new ArrayList<>();
+        code.addAll(generateForSubtree(left, leftBlock));
+        code.add(new Command(Op.OP_IFFALSE_JUMP, left, null, leftBlock.ifFalse));
+        code.add(new Command(Op.OP_MOV, left, null, operation.temp));
+        code.add(new Command(Op.OP_JUMP, null, null, parent.next));
+        code.add(newLabelCommand(leftBlock.next));
+        code.addAll(generateForSubtree(right, rightBlock));
+        code.add(newLabelCommand(rightBlock.next));
+        code.add(new Command(op, left, right, operation.temp));
+
+        return code;
+    }
+
+    public List<Command> generateStandardOperationCommands(
+        Operation operation, Op op, Expression left, Expression right, Block parent) {
+
+        Block leftBlock = new Block();
+        Block rightBlock = new Block();
+        leftBlock.ifFalse = newLabel();
+        leftBlock.ifTrue = newLabel();
+        leftBlock.next = newLabel();
+        rightBlock.ifTrue = newLabel();
+        rightBlock.ifFalse = newLabel();
+        rightBlock.next = newLabel();
+
+        List<Command> code = new ArrayList<>();
+        code.addAll(generateForSubtree(left, leftBlock));
+        code.add(newLabelCommand(leftBlock.next));
+        code.addAll(generateForSubtree(right, rightBlock));
+        code.add(newLabelCommand(rightBlock.next));
+        code.add(new Command(op, left, right, operation.temp));
+
         return code;
     }
 

@@ -63,6 +63,7 @@ public class Runner {
 
         while (currentCommand < code.size()) {
             Command command = code.get(currentCommand);
+            System.out.println(currentCommand);
 
             if (command.op == Op.OP_STORE) store(command);
             else if (command.op == Op.OP_ADD) add(command);
@@ -73,16 +74,49 @@ public class Runner {
             else if (command.op == Op.OP_OR) or(command);
             else if (command.op == Op.OP_AND) and(command);
             else if (command.op == Op.OP_NOT) not(command);
+            else if (command.op == Op.OP_JUMP) jump(command);
+            else if (command.op == Op.OP_IFTRUE_JUMP) ifTrueJump(command);
+            else if (command.op == Op.OP_IFFALSE_JUMP) ifFalseJump(command);
+            else if (command.op == Op.OP_MOV) move(command);
             else if (command.op == Op.OP_PRINT) print(command);
 
             currentCommand++;
         }
     }
 
+    private void move(Command command) {
+        Object value = getValueFromExpression(command.left);
+        Var variable = temps.get(command.result);
+        variable.value = value;
+    }
+
+    private void jump(Command command) {
+        String label = command.result;
+        Integer labelIndex = labels.get(label);
+        currentCommand = labelIndex.intValue();
+    }
+
+    private void ifTrueJump(Command command) {
+        Boolean value = (Boolean) getValueFromExpression(command.left);
+        if (value) {
+            String label = command.result;
+            Integer labelIndex = labels.get(command.result);
+            currentCommand = labelIndex.intValue();
+        }
+    }
+
+    private void ifFalseJump(Command command) {
+        Boolean value = (Boolean) getValueFromExpression(command.left);
+        if (!value) {
+            String label = command.result;
+            Integer labelIndex = labels.get(command.result);
+            currentCommand = labelIndex.intValue();
+        }
+    }
+
     private void print(Command command) {
         System.out.println(getValueFromExpression(command.left));
     }
-
 
     private void store(Command command) {
         Var variable = vars.get(command.result);
