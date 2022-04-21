@@ -63,7 +63,7 @@ public class Runner {
 
         while (currentCommand < code.size()) {
             Command command = code.get(currentCommand);
-            System.out.println(currentCommand);
+            //System.out.println(currentCommand);
 
             if (command.op == Op.OP_STORE) store(command);
             else if (command.op == Op.OP_ADD) add(command);

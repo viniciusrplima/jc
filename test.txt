@@ -2,14 +2,7 @@
 int a;
 a = 5;
 
-if (a == 2) {
-    print("igual a 2");
-}
-else if (a == 5) {
-    print("igual a 5");
-}
-else if (a == 7) {
-    print("igual a 7");
-} else {
-    print("nao sei");
+while(a < 20) {
+    a = a + 1;
+    print(a);
 }

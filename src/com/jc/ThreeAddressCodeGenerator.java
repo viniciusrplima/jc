@@ -50,6 +50,7 @@ public class ThreeAddressCodeGenerator {
         else if (tree instanceof Assignment) return generateCommands((Assignment) tree);
         else if (tree instanceof Operation) return generateCommands((Operation) tree, parent);
         else if (tree instanceof Conditional) return generateCommands((Conditional) tree, parent);
+        else if (tree instanceof WhileLoop) return generateCommands((WhileLoop) tree, parent);
         else if (tree instanceof Print) return generateCommands((Print) tree);
         else if (tree instanceof Expression) return new ArrayList<>();
         else if (tree instanceof Node) return generateCommands(tree);
@@ -68,6 +69,28 @@ public class ThreeAddressCodeGenerator {
     
             code.add(newLabelCommand(child.next));
         }
+
+        return code;
+    }
+
+    private List<Command> generateCommands(WhileLoop whileLoop, Block parent) {
+        Block child = new Block();
+        child.next = parent.next;
+        child.ifFalse = newLabel();
+        
+        String testLabel = newLabel();
+
+        Block childExpr = new Block();
+        childExpr.next = newLabel();
+        
+        List<Command> code = new ArrayList<>();
+        code.add(newLabelCommand(testLabel));
+        code.addAll(generateForSubtree(whileLoop.test, childExpr));
+        code.add(newLabelCommand(childExpr.next));
+        code.add(new Command(Op.OP_IFFALSE_JUMP, whileLoop.test, null, child.ifFalse));
+        code.addAll(generateForSubtree(whileLoop.children.get(0), child));
+        code.add(new Command(Op.OP_JUMP, null, null, testLabel));
+        code.add(newLabelCommand(child.ifFalse));
 
         return code;
     }

@@ -134,6 +134,13 @@ parser code {:
         return conditional;
     }
 
+    private WhileLoop newWhileLoopNode(Expression expression, Node block) {
+        WhileLoop whileLoop = new WhileLoop();
+        whileLoop.test = expression;
+        whileLoop = (WhileLoop) pushBackChildren(whileLoop, block);
+        return whileLoop;
+    }
+
     private String widen(String type1, String type2) throws Exception {
         if (type1.equals(Constants.T_REAL) || type2.equals(Constants.T_REAL)) return Constants.T_REAL;
         if (type1.equals(Constants.T_INT) || type2.equals(Constants.T_INT)) return Constants.T_INT;
@@ -240,6 +247,7 @@ terminal            R_CRL; // right curly brackets
 terminal            PRINT;
 terminal            IF;
 terminal            ELSE;
+terminal            WHILE;
 
 non terminal Node           S;
 non terminal Node           _COMMANDS;
@@ -250,6 +258,7 @@ non terminal Expression     _EXP;
 non terminal Node           _PRINT;
 non terminal Node           _CONDITIONAL;
 non terminal Node           _CONDITIONAL_ALT;
+non terminal Node           _WHILE_LOOP;
 
 precedence left EQ, NEQ, GT, GTE, LT, LTE;
 
@@ -266,6 +275,7 @@ S ::= _COMMANDS:cmds     {: System.out.println(cmds); tree = cmds; RESULT = cmds
 
 _COMMANDS ::= _COMMAND:cmd SMC _COMMANDS:cmds   {: RESULT = pushFrontChild(cmds, cmd); :}
             | _CONDITIONAL:cond _COMMANDS:cmds  {: RESULT = pushFrontChild(cmds, cond); :}
+            | _WHILE_LOOP:loop _COMMANDS:cmds   {: RESULT = pushFrontChild(cmds, loop); :}
             |                   {: RESULT = new Node(); :}
             ;
 
@@ -310,3 +320,6 @@ _CONDITIONAL_ALT ::= ELSE L_CRL _COMMANDS:cmds R_CRL    {: RESULT = cmds; :}
                    | ELSE _CONDITIONAL:cond             {: RESULT = cond; :}
                    |
                    ;
+
+_WHILE_LOOP ::= WHILE L_PTH _EXP:e R_PTH L_CRL _COMMANDS:cmds R_CRL {:
+                    verifyBooleanType(e.type); RESULT = newWhileLoopNode(e, cmds); :};
