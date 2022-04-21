@@ -80,6 +80,7 @@ public class ThreeAddressCodeGenerator {
         code.addAll(generateForSubtree(conditional.children.get(0), child));
         code.add(new Command(Op.OP_JUMP, null, null, parent.next));
         code.add(newLabelCommand(child.ifFalse));
+        code.addAll(generateForSubtree(conditional.children.get(1), parent));
 
         return code;
     }

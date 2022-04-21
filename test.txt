@@ -1,4 +1,9 @@
 
 if (false) {
-    print("done");
+    print("Verdadeiro");
+}
+else if (true) {
+    print("Do meio");
+} else {
+    print("Falso");
 }

@@ -116,10 +116,14 @@ parser code {:
         return (Print) pushBackChildren(print, expression);
     }
 
-    private Conditional newConditionalNode(Expression expression, Node block) {
+    private Conditional newConditionalNode(Expression expression, Node block, Node conditionalAlt) {
         Conditional conditional = new Conditional();
         conditional.test = expression;
-        return (Conditional) pushBackChildren(conditional, block);
+        conditional = (Conditional) pushBackChildren(conditional, block);
+        if (conditionalAlt != null) {
+            conditional = (Conditional) pushBackChildren(conditional, conditionalAlt);
+        }
+        return conditional;
     }
 
     private String widen(String type1, String type2) throws Exception {
@@ -162,7 +166,10 @@ parser code {:
     }
 
     private Node pushBackChildren(Node parent, Node... children) {
-        parent.children = List.of(children);
+        if (parent.children == null) {
+            parent.children = new ArrayList<>();
+        }
+        parent.children.addAll(List.of(children));
         return parent;
     }
 
@@ -221,6 +228,7 @@ non terminal Node           _ASSIGN;
 non terminal Expression     _EXP;
 non terminal Node           _PRINT;
 non terminal Node           _CONDITIONAL;
+non terminal Node           _CONDITIONAL_ALT;
 
 precedence left ADD, SUB;
 precedence left MULT, DIV;
@@ -265,5 +273,11 @@ _EXP ::= ID:id                  {: RESULT = newVariableExpr(id, getVarType(id));
        | L_PTH _EXP:e R_PTH     {: RESULT = e; :}
        ;
 
-_CONDITIONAL ::= IF L_PTH _EXP:e R_PTH L_CRL _COMMANDS:cmds R_CRL {: verifyBooleanType(e.type); RESULT = newConditionalNode(e, cmds); :}
+_CONDITIONAL ::= IF L_PTH _EXP:e R_PTH L_CRL _COMMANDS:cmds R_CRL _CONDITIONAL_ALT:alt {: 
+                    verifyBooleanType(e.type); RESULT = newConditionalNode(e, cmds, alt); :}
                ;
+
+_CONDITIONAL_ALT ::= ELSE L_CRL _COMMANDS:cmds R_CRL    {: RESULT = cmds; :}
+                   | ELSE _CONDITIONAL:cond             {: RESULT = cond; :}
+                   |
+                   ;
