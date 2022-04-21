@@ -61,11 +61,13 @@ public class ThreeAddressCodeGenerator {
         Block child = new Block();
         child.next = newLabel();
 
-        for (Node node : tree.children) {
-            code.addAll(generateForSubtree(node, child));
+        if (tree.children != null) {
+            for (Node node : tree.children) {
+                code.addAll(generateForSubtree(node, child));
+            }
+    
+            code.add(newLabelCommand(child.next));
         }
-
-        code.add(newLabelCommand(child.next));
 
         return code;
     }
@@ -80,7 +82,10 @@ public class ThreeAddressCodeGenerator {
         code.addAll(generateForSubtree(conditional.children.get(0), child));
         code.add(new Command(Op.OP_JUMP, null, null, parent.next));
         code.add(newLabelCommand(child.ifFalse));
-        code.addAll(generateForSubtree(conditional.children.get(1), parent));
+
+        if (conditional.children.size() > 1) {
+            code.addAll(generateForSubtree(conditional.children.get(1), parent));
+        }
 
         return code;
     }
