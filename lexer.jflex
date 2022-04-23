@@ -57,6 +57,8 @@ string      = \".*\"
 "<"             { return symbol("LESS_THAN", sym.LT); }
 "<="            { return symbol("LESS_THAN_OR_EQUAL", sym.LTE); }
 "="             { return symbol("ASSIGN", sym.ASSIGN); }
+"++"            { return symbol("INCREMENT", sym.INC); }
+"--"            { return symbol("DECREMENT", sym.DEC); }
 "**"            { return symbol("POWER", sym.POW); }
 "+"             { return symbol("ADD", sym.ADD); }
 "-"             { return symbol("SUB", sym.SUB); }

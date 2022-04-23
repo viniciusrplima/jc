@@ -89,6 +89,15 @@ parser code {:
         return (Operation) pushBackChildren(operation, left, right);
     }
 
+    private Operation newIncrementOperationExpr(String op, String varName) throws Exception {
+        Increment increment = new Increment();
+        increment.variable = varName;
+        increment.operation = op;
+        increment.type = getVarType(varName);
+        increment.temp = newTemp(increment.type);
+        return (Operation) pushBackChildren(increment, newVariableExpr(varName, getVarType(varName)));
+    }
+
     private Operation newRelOperationExpr(String op, Expression left, Expression right) throws Exception {
         Operation operation = new Operation();
         operation.type = Constants.T_BOOL;
@@ -194,6 +203,12 @@ parser code {:
         }
     }
 
+    private void verifyUnaryAritType(String type) throws Exception {
+        if (!type.equals(Constants.T_INT) && !type.equals(Constants.T_REAL)) {
+            throw new Exception(String.format("Cannot use operation with type '%s'", type));
+        }
+    }
+
     private Node pushBackChildren(Node parent, Node... children) {
         if (parent.children == null) {
             parent.children = new ArrayList<>();
@@ -237,6 +252,8 @@ terminal            SUB;
 terminal            MULT;
 terminal            DIV;
 terminal            POW;
+terminal            INC;
+terminal            DEC;
 terminal            OR;
 terminal            AND;
 terminal            NOT;
@@ -290,6 +307,7 @@ _COMMANDS ::= _COMMAND:cmd SMC _COMMANDS:cmds   {: RESULT = pushFrontChild(cmds,
 _COMMAND ::= _DECL:node         {: RESULT = node; :}
            | _ASSIGN:node       {: RESULT = node; :}
            | _PRINT:node        {: RESULT = node; :}
+           | _EXP:e             {: RESULT = e; :}
            ;
 
 _PRINT ::= PRINT L_PTH _EXP:e R_PTH {: RESULT = newPrintNode(e); :};
@@ -308,6 +326,8 @@ _EXP ::= ID:id                  {: RESULT = newVariableExpr(id, getVarType(id));
        | _EXP:e1 MULT _EXP:e2   {: verifyAritTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_MULT, e1, e2); :}
        | _EXP:e1 DIV _EXP:e2    {: verifyAritTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_DIV, e1, e2); :}
        | _EXP:e1 POW _EXP:e2    {: verifyAritTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_POW, e1, e2); :}
+       | ID:id INC              {: verifyUnaryAritType(getVarType(id)); RESULT = newIncrementOperationExpr(Constants.OP_INC, id); :}
+       | ID:id DEC              {: verifyUnaryAritType(getVarType(id)); RESULT = newIncrementOperationExpr(Constants.OP_DEC, id); :}
        | _EXP:e1 OR _EXP:e2     {: verifyLogicTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_OR, e1, e2); :}
        | _EXP:e1 AND _EXP:e2    {: verifyLogicTypes(e1.type, e2.type); RESULT = newOperationExpr(Constants.OP_AND, e1, e2); :}
        | NOT _EXP:e             {: verifyUnaryLogicTypes(e.type); RESULT = newUnaryOperationExpr(Constants.OP_NOT, e); :}

@@ -71,6 +71,8 @@ public class Runner {
             else if (command.op == Op.OP_MULT) mult(command);
             else if (command.op == Op.OP_DIV) div(command);
             else if (command.op == Op.OP_POW) pow(command);
+            else if (command.op == Op.OP_INC) inc(command);
+            else if (command.op == Op.OP_DEC) dec(command);
             else if (command.op == Op.OP_OR) or(command);
             else if (command.op == Op.OP_AND) and(command);
             else if (command.op == Op.OP_NOT) not(command);
@@ -199,6 +201,32 @@ public class Runner {
         }
         else if (result.type == Integer.class) {
             result.value = Integer.valueOf((int) Math.floor(Math.pow(left, right)));
+        }
+    }
+
+    private void inc(Command command) {
+        Var result = temps.get(command.result);
+
+        if (result.type == Double.class) {
+            Double value = getDoubleValueFromExpression(command.left);
+            result.value = value + 1;
+        }
+        else if (result.type == Integer.class) {
+            Integer value = getIntegerValueFromExpression(command.left);
+            result.value = value + 1;
+        }
+    }
+
+    private void dec(Command command) {
+        Var result = temps.get(command.result);
+
+        if (result.type == Double.class) {
+            Double value = getDoubleValueFromExpression(command.left);
+            result.value = value - 1;
+        }
+        else if (result.type == Integer.class) {
+            Integer value = getIntegerValueFromExpression(command.left);
+            result.value = value - 1;
         }
     }
 

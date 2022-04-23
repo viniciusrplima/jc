@@ -20,4 +20,6 @@ public class Constants {
     public static final String OP_GTE = ">=";
     public static final String OP_LT = "<";
     public static final String OP_LTE = "<=";
+    public static final String OP_INC = "++";
+    public static final String OP_DEC = "--";
 }

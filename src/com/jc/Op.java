@@ -9,6 +9,8 @@ public enum Op {
     OP_MULT, 
     OP_DIV, 
     OP_POW, 
+    OP_DEC, 
+    OP_INC, 
     OP_PRINT, 
     OP_OR, 
     OP_AND, 
