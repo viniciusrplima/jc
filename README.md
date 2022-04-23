@@ -5,7 +5,7 @@ semanthic analysis.
 
 ## Using
 
-Build compiler with the following command, you must have ant installed.
+Build the interpreter with the following command, you must have ant installed.
 
 ```bash
 ant
