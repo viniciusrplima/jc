@@ -1,0 +1,15 @@
+
+int a = 20;
+
+while (a < 30) {
+    a++;
+}
+
+for (int i = 0; i < 10; i++) {
+    print(i);
+}
+
+if (a + i > 35) {
+    print(a + i);
+    print("Sucesso!");
+}

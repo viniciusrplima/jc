@@ -5,4 +5,4 @@ bin/
 **/Parser.java
 **/sym.java
 
-*.jc
+.vscode
