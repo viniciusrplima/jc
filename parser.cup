@@ -124,9 +124,9 @@ parser code {:
         return (Print) pushBackChildren(print, expression);
     }
 
-    private Conditional newConditionalNode(Expression expression, Node block, Node conditionalAlt) {
+    private Conditional newConditionalNode(Expression test, Node block, Node conditionalAlt) {
         Conditional conditional = new Conditional();
-        conditional.test = expression;
+        conditional.test = test;
         conditional = (Conditional) pushBackChildren(conditional, block);
         if (conditionalAlt != null) {
             conditional = (Conditional) pushBackChildren(conditional, conditionalAlt);
@@ -134,11 +134,18 @@ parser code {:
         return conditional;
     }
 
-    private WhileLoop newWhileLoopNode(Expression expression, Node block) {
+    private WhileLoop newWhileLoopNode(Expression test, Node block) {
         WhileLoop whileLoop = new WhileLoop();
-        whileLoop.test = expression;
+        whileLoop.test = test;
         whileLoop = (WhileLoop) pushBackChildren(whileLoop, block);
         return whileLoop;
+    }
+
+    private DoWhileLoop newDoWhileLoopNode(Expression test, Node block) {
+        DoWhileLoop doWhileLoop = new DoWhileLoop();
+        doWhileLoop.test = test;
+        doWhileLoop = (DoWhileLoop) pushBackChildren(doWhileLoop, block);
+        return doWhileLoop;
     }
 
     private String widen(String type1, String type2) throws Exception {
@@ -248,6 +255,7 @@ terminal            PRINT;
 terminal            IF;
 terminal            ELSE;
 terminal            WHILE;
+terminal            DO;
 
 non terminal Node           S;
 non terminal Node           _COMMANDS;
@@ -322,4 +330,7 @@ _CONDITIONAL_ALT ::= ELSE L_CRL _COMMANDS:cmds R_CRL    {: RESULT = cmds; :}
                    ;
 
 _WHILE_LOOP ::= WHILE L_PTH _EXP:e R_PTH L_CRL _COMMANDS:cmds R_CRL {:
-                    verifyBooleanType(e.type); RESULT = newWhileLoopNode(e, cmds); :};
+                    verifyBooleanType(e.type); RESULT = newWhileLoopNode(e, cmds); :}
+              | DO L_CRL _COMMANDS:cmds R_CRL WHILE L_PTH _EXP:e R_PTH {: 
+                    verifyBooleanType(e.type); RESULT = newDoWhileLoopNode(e, cmds); :}
+              ;
