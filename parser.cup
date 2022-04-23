@@ -128,6 +128,14 @@ parser code {:
         return declaration;
     }
 
+    private Node newDeclarationNode(String name, String type, Expression value) throws Exception {
+        Declaration declaration = newDeclarationNode(name, type);
+        Assignment assignment = newAssignmentNode(name, value);
+        Node node = new Node();
+
+        return pushBackChildren(node, declaration, assignment);
+    }
+
     private Print newPrintNode(Expression expression) {
         Print print = new Print();
         return (Print) pushBackChildren(print, expression);
@@ -312,7 +320,10 @@ _COMMAND ::= _DECL:node         {: RESULT = node; :}
 
 _PRINT ::= PRINT L_PTH _EXP:e R_PTH {: RESULT = newPrintNode(e); :};
 
-_DECL ::= TYPE:t ID:id          {: declare(id, t); RESULT = newDeclarationNode(id, t); :};
+_DECL ::= TYPE:t ID:id          {: declare(id, t); RESULT = newDeclarationNode(id, t); :}
+        | TYPE:t ID:id ASSIGN _EXP:e {: 
+            declare(id, t); verifyAssignTypes(t, e.type); RESULT = newDeclarationNode(id, t, e); :}
+        ;
 
 _ASSIGN ::= ID:id ASSIGN _EXP:e {: verifyAssignTypes(getVarType(id), e.type); RESULT = newAssignmentNode(id, e); :};
 
