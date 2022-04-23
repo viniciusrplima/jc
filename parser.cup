@@ -313,7 +313,7 @@ precedence left OR;
 precedence left AND;
 precedence left NOT;
 
-S ::= _COMMANDS:cmds     {: System.out.println(cmds); tree = cmds; RESULT = cmds; :}
+S ::= _COMMANDS:cmds     {: tree = cmds; RESULT = cmds; :}
     ;
 
 _COMMANDS ::= _COMMAND:cmd SMC _COMMANDS:cmds   {: RESULT = pushFrontChild(cmds, cmd); :}
