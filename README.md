@@ -11,7 +11,7 @@ Build the interpreter with the following command, you must have ant installed.
 ant
 ```
 
-Use the command bellow to run the compiler with the code in sample file.
+Use the command bellow to run the interpreter with the code in sample file.
 
 ```bash
 bash run.sh sample.jc
