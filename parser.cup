@@ -165,6 +165,14 @@ parser code {:
         return doWhileLoop;
     }
 
+    private ForLoop newForLoopNode(Node declaration, Expression test, Node increment, Node block) {
+        ForLoop forLoop = new ForLoop();
+        forLoop.declaration = declaration;
+        forLoop.test = test;
+        forLoop.increment = increment;
+        return (ForLoop) pushBackChildren(forLoop, block);
+    }
+
     private String widen(String type1, String type2) throws Exception {
         if (type1.equals(Constants.T_REAL) || type2.equals(Constants.T_REAL)) return Constants.T_REAL;
         if (type1.equals(Constants.T_INT) || type2.equals(Constants.T_INT)) return Constants.T_INT;
@@ -281,6 +289,7 @@ terminal            IF;
 terminal            ELSE;
 terminal            WHILE;
 terminal            DO;
+terminal            FOR;
 
 non terminal Node           S;
 non terminal Node           _COMMANDS;
@@ -292,6 +301,7 @@ non terminal Node           _PRINT;
 non terminal Node           _CONDITIONAL;
 non terminal Node           _CONDITIONAL_ALT;
 non terminal Node           _WHILE_LOOP;
+non terminal Node           _FOR_LOOP;
 
 precedence left EQ, NEQ, GT, GTE, LT, LTE;
 
@@ -309,6 +319,7 @@ S ::= _COMMANDS:cmds     {: System.out.println(cmds); tree = cmds; RESULT = cmds
 _COMMANDS ::= _COMMAND:cmd SMC _COMMANDS:cmds   {: RESULT = pushFrontChild(cmds, cmd); :}
             | _CONDITIONAL:cond _COMMANDS:cmds  {: RESULT = pushFrontChild(cmds, cond); :}
             | _WHILE_LOOP:loop _COMMANDS:cmds   {: RESULT = pushFrontChild(cmds, loop); :}
+            | _FOR_LOOP:loop _COMMANDS:cmds     {: RESULT = pushFrontChild(cmds, loop); :}
             |                   {: RESULT = new Node(); :}
             ;
 
@@ -365,3 +376,7 @@ _WHILE_LOOP ::= WHILE L_PTH _EXP:e R_PTH L_CRL _COMMANDS:cmds R_CRL {:
               | DO L_CRL _COMMANDS:cmds R_CRL WHILE L_PTH _EXP:e R_PTH {: 
                     verifyBooleanType(e.type); RESULT = newDoWhileLoopNode(e, cmds); :}
               ;
+
+_FOR_LOOP ::= FOR L_PTH _DECL:decl SMC _EXP:e SMC _COMMAND:cmd R_PTH 
+                L_CRL _COMMANDS:cmds R_CRL {: 
+                    verifyBooleanType(e.type); RESULT = newForLoopNode(decl, e, cmd, cmds); :};

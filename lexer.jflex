@@ -78,6 +78,7 @@ string      = \".*\"
 "else"          { return symbol("ELSE", sym.ELSE); }
 "while"         { return symbol("WHILE", sym.WHILE); }
 "do"            { return symbol("DO", sym.DO); }
+"for"           { return symbol("FOR", sym.FOR); }
 {string}        { return symbol("STRING", sym.STRING, yytext()); }
 {id}            { return symbol("ID", sym.ID, yytext()); }
 {space}         { }

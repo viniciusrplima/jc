@@ -53,6 +53,7 @@ public class ThreeAddressCodeGenerator {
         else if (tree instanceof Conditional) return generateCommands((Conditional) tree, parent);
         else if (tree instanceof WhileLoop) return generateCommands((WhileLoop) tree, parent);
         else if (tree instanceof DoWhileLoop) return generateCommands((DoWhileLoop) tree, parent);
+        else if (tree instanceof ForLoop) return generateCommands((ForLoop) tree, parent);
         else if (tree instanceof Print) return generateCommands((Print) tree);
         else if (tree instanceof Expression) return new ArrayList<>();
         else if (tree instanceof Node) return generateCommands(tree);
@@ -106,6 +107,35 @@ public class ThreeAddressCodeGenerator {
         code.add(newLabelCommand(childExpr.next));
         code.add(new Command(Op.OP_IFFALSE_JUMP, whileLoop.test, null, child.ifFalse));
         code.addAll(generateForSubtree(whileLoop.children.get(0), child));
+        code.add(new Command(Op.OP_JUMP, null, null, testLabel));
+        code.add(newLabelCommand(child.ifFalse));
+
+        return code;
+    }
+
+    private List<Command> generateCommands(ForLoop forLoop, Block parent) {
+        Block child = new Block();
+        child.next = parent.next;
+        child.ifFalse = newLabel();
+        
+        String testLabel = newLabel();
+
+        Block childExpr = new Block();
+        childExpr.next = newLabel();
+        
+        Block childIncrement = new Block();
+        childIncrement.next = newLabel();
+
+        List<Command> code = new ArrayList<>();
+        code.addAll(generateForSubtree(forLoop.declaration, null));
+        code.add(newLabelCommand(testLabel));
+        code.addAll(generateForSubtree(forLoop.test, childExpr));
+        code.add(newLabelCommand(childExpr.next));
+        code.add(new Command(Op.OP_IFFALSE_JUMP, forLoop.test, null, child.ifFalse));
+        code.addAll(generateForSubtree(forLoop.children.get(0), child));
+        code.add(newLabelCommand(child.next));
+        code.addAll(generateForSubtree(forLoop.increment, childIncrement));
+        code.add(newLabelCommand(childIncrement.next));
         code.add(new Command(Op.OP_JUMP, null, null, testLabel));
         code.add(newLabelCommand(child.ifFalse));
 
