@@ -11,30 +11,20 @@ public class ThreeAddressCodeGenerator {
 
     private int labelSequence;
 
-    private class Block {
-        public String next;
-        public String ifTrue;
-        public String ifFalse;
-        public List<Command> code;
-    }
-
     public ThreeAddressCodeGenerator() {
         labelSequence = 1;
     }
     
     public List<Command> generate(Node tree) {
-        Block program = new Block();
-        program.next = newLabel();
-        program.code = new ArrayList<>();
+        String nextLabel = newLabel();
+        List<Command> code = new ArrayList<>();
         
         for (Node node : tree.children) {
-            program.code.addAll(generateForSubtree(node, program));
+            code.addAll(generateForSubtree(node, nextLabel));
         }
 
-        Command lastLabel = new Command();
-        lastLabel.label = program.next;
-        program.code.add(lastLabel);
-        return program.code;
+        code.add(newLabelCommand(nextLabel));
+        return code;
     }
 
     private String newLabel() {
@@ -45,15 +35,15 @@ public class ThreeAddressCodeGenerator {
         return new Command(label, null, null, null, null);
     }
 
-    private List<Command> generateForSubtree(Node tree, Block parent) {
+    private List<Command> generateForSubtree(Node tree, String nextLabel) {
         if (tree instanceof Declaration) return new ArrayList<>();
         else if (tree instanceof Assignment) return generateCommands((Assignment) tree);
         else if (tree instanceof Increment) return generateCommands((Increment) tree);
-        else if (tree instanceof Operation) return generateCommands((Operation) tree, parent);
-        else if (tree instanceof Conditional) return generateCommands((Conditional) tree, parent);
-        else if (tree instanceof WhileLoop) return generateCommands((WhileLoop) tree, parent);
-        else if (tree instanceof DoWhileLoop) return generateCommands((DoWhileLoop) tree, parent);
-        else if (tree instanceof ForLoop) return generateCommands((ForLoop) tree, parent);
+        else if (tree instanceof Operation) return generateCommands((Operation) tree, nextLabel);
+        else if (tree instanceof Conditional) return generateCommands((Conditional) tree, nextLabel);
+        else if (tree instanceof WhileLoop) return generateCommands((WhileLoop) tree, nextLabel);
+        else if (tree instanceof DoWhileLoop) return generateCommands((DoWhileLoop) tree, nextLabel);
+        else if (tree instanceof ForLoop) return generateCommands((ForLoop) tree, nextLabel);
         else if (tree instanceof Print) return generateCommands((Print) tree);
         else if (tree instanceof Expression) return new ArrayList<>();
         else if (tree instanceof Node) return generateCommands(tree);
@@ -62,15 +52,14 @@ public class ThreeAddressCodeGenerator {
 
     private List<Command> generateCommands(Node tree) {
         List<Command> code = new ArrayList<>();
-        Block child = new Block();
-        child.next = newLabel();
+        String nextLabel = newLabel();
 
         if (tree.children != null) {
             for (Node node : tree.children) {
-                code.addAll(generateForSubtree(node, child));
+                code.addAll(generateForSubtree(node, nextLabel));
             }
     
-            code.add(newLabelCommand(child.next));
+            code.add(newLabelCommand(nextLabel));
         }
 
         return code;
@@ -91,123 +80,103 @@ public class ThreeAddressCodeGenerator {
         return code;
     }
 
-    private List<Command> generateCommands(WhileLoop whileLoop, Block parent) {
-        Block child = new Block();
-        child.next = parent.next;
-        child.ifFalse = newLabel();
-        
+    private List<Command> generateCommands(WhileLoop whileLoop, String nextLabel) {
+        String childIfFalseLabel = newLabel();
         String testLabel = newLabel();
-
-        Block childExpr = new Block();
-        childExpr.next = newLabel();
+        String testNextLabel = newLabel();
         
         List<Command> code = new ArrayList<>();
         code.add(newLabelCommand(testLabel));
-        code.addAll(generateForSubtree(whileLoop.test, childExpr));
-        code.add(newLabelCommand(childExpr.next));
-        code.add(new Command(Op.OP_IFFALSE_JUMP, whileLoop.test, null, child.ifFalse));
-        code.addAll(generateForSubtree(whileLoop.children.get(0), child));
+        code.addAll(generateForSubtree(whileLoop.test, testNextLabel));
+        code.add(newLabelCommand(testNextLabel));
+        code.add(new Command(Op.OP_IFFALSE_JUMP, whileLoop.test, null, childIfFalseLabel));
+        code.addAll(generateForSubtree(whileLoop.children.get(0), nextLabel));
         code.add(new Command(Op.OP_JUMP, null, null, testLabel));
-        code.add(newLabelCommand(child.ifFalse));
+        code.add(newLabelCommand(childIfFalseLabel));
 
         return code;
     }
 
-    private List<Command> generateCommands(ForLoop forLoop, Block parent) {
-        Block child = new Block();
-        child.next = parent.next;
-        child.ifFalse = newLabel();
-        
+    private List<Command> generateCommands(ForLoop forLoop, String nextLabel) {
+        String ifFalseLabel = newLabel();
         String testLabel = newLabel();
-
-        Block childExpr = new Block();
-        childExpr.next = newLabel();
-        
-        Block childIncrement = new Block();
-        childIncrement.next = newLabel();
+        String testNextLabel = newLabel();
+        String incrementNextLabel = newLabel();
 
         List<Command> code = new ArrayList<>();
         code.addAll(generateForSubtree(forLoop.declaration, null));
         code.add(newLabelCommand(testLabel));
-        code.addAll(generateForSubtree(forLoop.test, childExpr));
-        code.add(newLabelCommand(childExpr.next));
-        code.add(new Command(Op.OP_IFFALSE_JUMP, forLoop.test, null, child.ifFalse));
-        code.addAll(generateForSubtree(forLoop.children.get(0), child));
-        code.add(newLabelCommand(child.next));
-        code.addAll(generateForSubtree(forLoop.increment, childIncrement));
-        code.add(newLabelCommand(childIncrement.next));
+        code.addAll(generateForSubtree(forLoop.test, testNextLabel));
+        code.add(newLabelCommand(testNextLabel));
+        code.add(new Command(Op.OP_IFFALSE_JUMP, forLoop.test, null, ifFalseLabel));
+        code.addAll(generateForSubtree(forLoop.children.get(0), nextLabel));
+        code.add(newLabelCommand(nextLabel));
+        code.addAll(generateForSubtree(forLoop.increment, incrementNextLabel));
+        code.add(newLabelCommand(incrementNextLabel));
         code.add(new Command(Op.OP_JUMP, null, null, testLabel));
-        code.add(newLabelCommand(child.ifFalse));
+        code.add(newLabelCommand(ifFalseLabel));
 
         return code;
     }
 
-    private List<Command> generateCommands(DoWhileLoop doWhileLoop, Block parent) {
-        Block child = new Block();
-        child.next = parent.next;
-        child.ifTrue = newLabel();
-        
-        Block childExpr = new Block();
-        childExpr.next = newLabel();
+    private List<Command> generateCommands(DoWhileLoop doWhileLoop, String nextLabel) {
+        String ifTrueLabel = newLabel();
+        String testNextLabel = newLabel();
         
         List<Command> code = new ArrayList<>();
-        code.add(newLabelCommand(child.ifTrue));
-        code.addAll(generateForSubtree(doWhileLoop.children.get(0), child));
-        code.addAll(generateForSubtree(doWhileLoop.test, childExpr));
-        code.add(newLabelCommand(childExpr.next));
-        code.add(new Command(Op.OP_IFTRUE_JUMP, doWhileLoop.test, null, child.ifTrue));
+        code.add(newLabelCommand(ifTrueLabel));
+        code.addAll(generateForSubtree(doWhileLoop.children.get(0), nextLabel));
+        code.addAll(generateForSubtree(doWhileLoop.test, testNextLabel));
+        code.add(newLabelCommand(testNextLabel));
+        code.add(new Command(Op.OP_IFTRUE_JUMP, doWhileLoop.test, null, ifTrueLabel));
 
         return code;
     }
 
-    private List<Command> generateCommands(Conditional conditional, Block parent) {
-        Block child = new Block();
-        child.next = parent.next;
-        child.ifFalse = newLabel();
+    private List<Command> generateCommands(Conditional conditional, String nextLabel) {
+        String ifFalseLabel = newLabel();
+        String testNextLabel = newLabel();
 
-        Block childExpr = new Block();
-        childExpr.next = newLabel();
-        
         List<Command> code = new ArrayList<>();
-        code.addAll(generateForSubtree(conditional.test, childExpr));
-        code.add(newLabelCommand(childExpr.next));
-        code.add(new Command(Op.OP_IFFALSE_JUMP, conditional.test, null, child.ifFalse));
-        code.addAll(generateForSubtree(conditional.children.get(0), child));
-        code.add(new Command(Op.OP_JUMP, null, null, parent.next));
-        code.add(newLabelCommand(child.ifFalse));
+        code.addAll(generateForSubtree(conditional.test, testNextLabel));
+        code.add(newLabelCommand(testNextLabel));
+        code.add(new Command(Op.OP_IFFALSE_JUMP, conditional.test, null, ifFalseLabel));
+        code.addAll(generateForSubtree(conditional.children.get(0), nextLabel));
+        code.add(new Command(Op.OP_JUMP, null, null, nextLabel));
+        code.add(newLabelCommand(ifFalseLabel));
 
         if (conditional.children.size() > 1) {
-            code.addAll(generateForSubtree(conditional.children.get(1), parent));
+            code.addAll(generateForSubtree(conditional.children.get(1), nextLabel));
         }
 
         return code;
     }
 
     private List<Command> generateCommands(Print print) {
-        Block child = new Block();
-        child.next = newLabel();
+        String childNextLabel = newLabel();
+
         Expression expression = (Expression) print.children.get(0);
 
         List<Command> code = new ArrayList<>();
-        code.addAll(generateForSubtree(expression, child));
-        code.add(new Command(child.next, null, null, null, null));
+        code.addAll(generateForSubtree(expression, childNextLabel));
+        code.add(newLabelCommand(childNextLabel));
         code.add(new Command(Op.OP_PRINT, expression, null, null));
         return code;
     }
 
     private List<Command> generateCommands(Assignment assignment) {
-        Block child = new Block();
-        child.next = newLabel();
+        String childNextLabel = newLabel();
+
         Expression expression = (Expression) assignment.children.get(0);
 
         List<Command> code = new ArrayList<>();
-        code.addAll(generateForSubtree(expression, child));
-        code.add(new Command(child.next, null, null, null, null));
+        code.addAll(generateForSubtree(expression, childNextLabel));
+        code.add(newLabelCommand(childNextLabel));
         code.add(new Command(Op.OP_STORE, expression, null, assignment.variable));
         return code;
     }
 
-    private List<Command> generateCommands(Operation operation, Block parent) {
+    private List<Command> generateCommands(Operation operation, String nextLabel) {
         Op op = null;
         if (operation.operation.equals(OP_ADD)) op = Op.OP_ADD;
         if (operation.operation.equals(OP_SUB)) op = Op.OP_SUB;
@@ -230,79 +199,63 @@ public class ThreeAddressCodeGenerator {
             right = (Expression) operation.children.get(1);
         }
 
-        if (op == Op.OP_OR) return generateOrOperationCommands(operation, op, left, right, parent);
-        else if (op == Op.OP_AND) return generateAndOperationCommands(operation, op, left, right, parent);
-        else return generateStandardOperationCommands(operation, op, left, right, parent);
+        if (op == Op.OP_OR) return generateOrOperationCommands(operation, op, left, right, nextLabel);
+        else if (op == Op.OP_AND) return generateAndOperationCommands(operation, op, left, right, nextLabel);
+        else return generateStandardOperationCommands(operation, op, left, right);
 
     }
 
     public List<Command> generateAndOperationCommands(
-        Operation operation, Op op, Expression left, Expression right, Block parent) {
+        Operation operation, Op op, Expression left, Expression right, String nextLabel) {
         
-        Block leftBlock = new Block();
-        Block rightBlock = new Block();
-        rightBlock.next = newLabel();
-        rightBlock.ifTrue = rightBlock.next;
-        rightBlock.ifFalse = rightBlock.next;
-        leftBlock.next = newLabel();
-        leftBlock.ifFalse = rightBlock.next;
-        leftBlock.ifTrue = leftBlock.next;
+        String leftNextLabel = newLabel();
+        String leftIfTrueLabel = leftNextLabel;
+        String rightNextLabel = newLabel();
 
         List<Command> code = new ArrayList<>();
-        code.addAll(generateForSubtree(left, leftBlock));
-        code.add(new Command(Op.OP_IFTRUE_JUMP, left, null, leftBlock.ifTrue));
+        code.addAll(generateForSubtree(left, leftNextLabel));
+        code.add(new Command(Op.OP_IFTRUE_JUMP, left, null, leftIfTrueLabel));
         code.add(new Command(Op.OP_MOV, left, null, operation.temp));
-        code.add(new Command(Op.OP_JUMP, null, null, parent.next));
-        code.add(newLabelCommand(leftBlock.next));
-        code.addAll(generateForSubtree(right, rightBlock));
-        code.add(newLabelCommand(rightBlock.next));
+        code.add(new Command(Op.OP_JUMP, null, null, nextLabel));
+        code.add(newLabelCommand(leftNextLabel));
+        code.addAll(generateForSubtree(right, rightNextLabel));
+        code.add(newLabelCommand(rightNextLabel));
         code.add(new Command(op, left, right, operation.temp));
 
         return code;
     }
 
     public List<Command> generateOrOperationCommands(
-        Operation operation, Op op, Expression left, Expression right, Block parent) {
+        Operation operation, Op op, Expression left, Expression right, String nextLabel) {
         
-        Block leftBlock = new Block();
-        Block rightBlock = new Block();
-        rightBlock.next = newLabel();
-        rightBlock.ifTrue = rightBlock.next;
-        rightBlock.ifFalse = rightBlock.next;
-        leftBlock.next = newLabel();
-        leftBlock.ifFalse = leftBlock.next;
-        leftBlock.ifTrue = rightBlock.next;
-
+        String leftNextLabel = newLabel();
+        String rightNextLabel = newLabel();
+        String leftIfFalseLabel = leftNextLabel;
+        
         List<Command> code = new ArrayList<>();
-        code.addAll(generateForSubtree(left, leftBlock));
-        code.add(new Command(Op.OP_IFFALSE_JUMP, left, null, leftBlock.ifFalse));
+        code.addAll(generateForSubtree(left, leftNextLabel));
+        code.add(new Command(Op.OP_IFFALSE_JUMP, left, null, leftIfFalseLabel));
         code.add(new Command(Op.OP_MOV, left, null, operation.temp));
-        code.add(new Command(Op.OP_JUMP, null, null, parent.next));
-        code.add(newLabelCommand(leftBlock.next));
-        code.addAll(generateForSubtree(right, rightBlock));
-        code.add(newLabelCommand(rightBlock.next));
+        code.add(new Command(Op.OP_JUMP, null, null, nextLabel));
+        code.add(newLabelCommand(leftNextLabel));
+        code.addAll(generateForSubtree(right, rightNextLabel));
+        code.add(newLabelCommand(rightNextLabel));
         code.add(new Command(op, left, right, operation.temp));
 
         return code;
     }
 
     public List<Command> generateStandardOperationCommands(
-        Operation operation, Op op, Expression left, Expression right, Block parent) {
+        Operation operation, Op op, Expression left, Expression right) {
 
-        Block leftBlock = new Block();
-        Block rightBlock = new Block();
-        leftBlock.ifFalse = newLabel();
-        leftBlock.ifTrue = newLabel();
-        leftBlock.next = newLabel();
-        rightBlock.ifTrue = newLabel();
-        rightBlock.ifFalse = newLabel();
-        rightBlock.next = newLabel();
+        String leftNextLabel = newLabel();
+        String rightNextLabel = newLabel();
 
         List<Command> code = new ArrayList<>();
-        code.addAll(generateForSubtree(left, leftBlock));
-        code.add(newLabelCommand(leftBlock.next));
-        code.addAll(generateForSubtree(right, rightBlock));
-        code.add(newLabelCommand(rightBlock.next));
+        code.addAll(generateForSubtree(left, leftNextLabel));
+        code.add(newLabelCommand(leftNextLabel));
+        code.addAll(generateForSubtree(right, rightNextLabel));
+        code.add(newLabelCommand(rightNextLabel));
         code.add(new Command(op, left, right, operation.temp));
 
         return code;
