@@ -3,6 +3,9 @@ package com.jc;
 import java.util.HashMap;
 import java.util.List;
 
+import com.jc.interpreter.Command;
+import com.jc.interpreter.Runner;
+import com.jc.interpreter.ThreeAddressCodeGenerator;
 import com.jc.node.Node;
 
 public class MainDebug {

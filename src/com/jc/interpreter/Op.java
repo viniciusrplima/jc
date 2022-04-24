@@ -1,4 +1,4 @@
-package com.jc;
+package com.jc.interpreter;
 
 public enum Op {
     OP_STORE, 

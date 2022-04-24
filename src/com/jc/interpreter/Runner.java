@@ -1,8 +1,9 @@
-package com.jc;
+package com.jc.interpreter;
 
 import java.util.HashMap;
 import java.util.List;
 
+import com.jc.Constants;
 import com.jc.node.Expression;
 import com.jc.node.Literal;
 import com.jc.node.Operation;

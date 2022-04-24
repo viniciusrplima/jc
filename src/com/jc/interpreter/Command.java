@@ -1,4 +1,4 @@
-package com.jc;
+package com.jc.interpreter;
 
 import com.jc.node.Expression;
 
